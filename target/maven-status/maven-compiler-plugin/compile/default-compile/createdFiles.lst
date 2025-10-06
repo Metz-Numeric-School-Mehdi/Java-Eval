@@ -1,0 +1,8 @@
+com/example/model/Task.class
+com/example/App.class
+com/example/repository/UserRepository.class
+com/example/repository/TaskRepository.class
+com/example/controller/TaskController.class
+com/example/controller/HomeController.class
+com/example/model/User.class
+com/example/controller/UserController.class

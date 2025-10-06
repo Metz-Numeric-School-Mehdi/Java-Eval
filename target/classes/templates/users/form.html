@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${user.id != null ? 'Modifier ' + user.name : 'Nouvel utilisateur'} + ' - TodoList App'">Formulaire utilisateur - TodoList App</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <style>
+        .navbar-brand {
+            font-weight: bold;
+        }
+        .form-card {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-check2-square me-2"></i>TodoList App
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="bi bi-house me-1"></i>Accueil
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/users">
+                            <i class="bi bi-people me-1"></i>Utilisateurs
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/tasks">
+                            <i class="bi bi-list-task me-1"></i>Tâches
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/h2-console" target="_blank">
+                            <i class="bi bi-database me-1"></i>Base de données
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenu principal -->
+    <main class="container my-4">
+        <!-- Navigation breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Accueil</a></li>
+                <li class="breadcrumb-item"><a href="/users">Utilisateurs</a></li>
+                <li class="breadcrumb-item active" th:text="${user.id != null ? 'Modifier' : 'Nouveau'}">Formulaire</li>
+            </ol>
+        </nav>
+
+        <!-- Formulaire -->
+        <div class="form-card">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i th:class="${user.id != null ? 'bi bi-pencil me-2' : 'bi bi-person-plus me-2'}"></i>
+                        <span th:text="${user.id != null ? 'Modifier l\'utilisateur' : 'Nouvel utilisateur'}">Formulaire utilisateur</span>
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form th:action="${user.id != null ? '/users/' + user.id : '/users'}" method="post" th:object="${user}">
+                        <!-- Nom -->
+                        <div class="mb-3">
+                            <label for="name" class="form-label">
+                                <i class="bi bi-person me-1"></i>Nom complet <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   th:class="${#fields.hasErrors('name')} ? 'form-control is-invalid' : 'form-control'"
+                                   id="name" 
+                                   th:field="*{name}"
+                                   placeholder="Entrez le nom complet"
+                                   required>
+                            <div th:if="${#fields.hasErrors('name')}" class="invalid-feedback">
+                                <span th:errors="*{name}"></span>
+                            </div>
+                            <div class="form-text">
+                                Le nom doit contenir entre 2 et 50 caractères.
+                            </div>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="mb-3">
+                            <label for="email" class="form-label">
+                                <i class="bi bi-envelope me-1"></i>Adresse email <span class="text-danger">*</span>
+                            </label>
+                            <input type="email" 
+                                   class="form-control" 
+                                   th:class="${#fields.hasErrors('email')} ? 'form-control is-invalid' : 'form-control'"
+                                   id="email" 
+                                   th:field="*{email}"
+                                   placeholder="nom@exemple.com"
+                                   required>
+                            <div th:if="${#fields.hasErrors('email')}" class="invalid-feedback">
+                                <span th:errors="*{email}"></span>
+                            </div>
+                            <div class="form-text">
+                                L'adresse email doit être valide et unique.
+                            </div>
+                        </div>
+
+                        <!-- Boutons -->
+                        <div class="d-flex justify-content-between">
+                            <a href="/users" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Retour
+                            </a>
+                            <div>
+                                <button type="reset" class="btn btn-outline-secondary me-2">
+                                    <i class="bi bi-arrow-clockwise me-1"></i>Réinitialiser
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i th:class="${user.id != null ? 'bi bi-check me-1' : 'bi bi-plus me-1'}"></i>
+                                    <span th:text="${user.id != null ? 'Modifier' : 'Créer'}">Enregistrer</span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Informations supplémentaires pour modification -->
+            <div th:if="${user.id != null}" class="mt-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-info-circle me-2"></i>Informations supplémentaires
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <strong>ID de l'utilisateur:</strong>
+                                <span th:text="${user.id}" class="text-muted">1</span>
+                            </div>
+                            <div class="col-sm-6">
+                                <strong>Nombre de tâches:</strong>
+                                <span th:text="${#lists.size(user.tasks)}" class="badge bg-primary">0</span>
+                            </div>
+                        </div>
+                        <div class="row mt-2" th:if="${#lists.size(user.tasks) > 0}">
+                            <div class="col">
+                                <small class="text-muted">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>
+                                    La suppression de cet utilisateur supprimera également toutes ses tâches.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-light py-4 mt-5">
+        <div class="container text-center text-muted">
+            <p class="mb-0">
+                <i class="bi bi-code-slash me-1"></i>
+                TodoList App - Application Spring Boot
+            </p>
+            <p class="mb-0">
+                <small>Auteur: Mehdi DIAS GOMES DFS-GR1</small>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
