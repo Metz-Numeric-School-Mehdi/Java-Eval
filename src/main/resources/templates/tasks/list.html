@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des tâches - TodoList App</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <style>
+        .navbar-brand {
+            font-weight: bold;
+        }
+        .task-completed {
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+        .filter-tabs {
+            border-bottom: 1px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-check2-square me-2"></i>TodoList App
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="bi bi-house me-1"></i>Accueil
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/users">
+                            <i class="bi bi-people me-1"></i>Utilisateurs
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/tasks">
+                            <i class="bi bi-list-task me-1"></i>Tâches
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/h2-console" target="_blank">
+                            <i class="bi bi-database me-1"></i>Base de données
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages Flash -->
+    <div class="container mt-3">
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${param.error}" class="alert alert-warning alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <span th:switch="${param.error[0]}">
+                <span th:case="TaskNotFound">Tâche non trouvée</span>
+                <span th:case="*">Une erreur s'est produite</span>
+            </span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    </div>
+
+    <!-- Contenu principal -->
+    <main class="container my-4">
+        <!-- En-tête -->
+        <div class="row mb-4">
+            <div class="col">
+                <h1 class="display-4 text-primary">
+                    <i class="bi bi-list-task me-3"></i><span th:text="${pageTitle ?: 'Tâches'}">Tâches</span>
+                </h1>
+                <p class="lead text-muted">Gestion des tâches de l'application</p>
+            </div>
+            <div class="col-auto">
+                <a href="/tasks/new" class="btn btn-success btn-lg">
+                    <i class="bi bi-plus me-2"></i>Nouvelle tâche
+                </a>
+            </div>
+        </div>
+
+        <!-- Filtres -->
+        <div class="row mb-4">
+            <div class="col">
+                <ul class="nav nav-tabs filter-tabs">
+                    <li class="nav-item">
+                        <a class="nav-link" th:classappend="${currentFilter == null ? 'active' : ''}" href="/tasks">
+                            <i class="bi bi-list-ul me-1"></i>Toutes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:classappend="${currentFilter == 'pending' ? 'active' : ''}" href="/tasks?filter=pending">
+                            <i class="bi bi-clock me-1"></i>En cours
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:classappend="${currentFilter == 'completed' ? 'active' : ''}" href="/tasks?filter=completed">
+                            <i class="bi bi-check-circle me-1"></i>Terminées
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Liste des tâches -->
+        <div class="row">
+            <div class="col">
+                <div th:if="${#lists.isEmpty(tasks)}" class="alert alert-info text-center">
+                    <i class="bi bi-info-circle fs-1 d-block mb-3"></i>
+                    <h4>Aucune tâche trouvée</h4>
+                    <p th:switch="${currentFilter}">
+                        <span th:case="completed">Aucune tâche terminée pour le moment.</span>
+                        <span th:case="pending">Aucune tâche en cours pour le moment.</span>
+                        <span th:case="*">Commencez par créer votre première tâche.</span>
+                    </p>
+                    <a href="/tasks/new" class="btn btn-primary">
+                        <i class="bi bi-plus me-2"></i>Créer une tâche
+                    </a>
+                </div>
+
+                <div th:if="${!#lists.isEmpty(tasks)}" class="card">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th width="100">Statut</th>
+                                        <th>Titre</th>
+                                        <th>Description</th>
+                                        <th>Utilisateur</th>
+                                        <th width="140">Créée le</th>
+                                        <th width="140">Échéance</th>
+                                        <th width="150">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="task : ${tasks}">
+                                        <td>
+                                            <span th:if="${task.completed}" class="badge bg-success">
+                                                <i class="bi bi-check-circle me-1"></i>Terminée
+                                            </span>
+                                            <span th:unless="${task.completed}" class="badge bg-warning">
+                                                <i class="bi bi-clock me-1"></i>En cours
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a th:href="@{/tasks/{id}(id=${task.id})}" 
+                                               class="text-decoration-none fw-bold"
+                                               th:class="${task.completed} ? 'task-completed' : ''"
+                                               th:text="${task.title}">
+                                                Titre de la tâche
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <span th:if="${task.description != null and !#strings.isEmpty(task.description)}"
+                                                  th:text="${#strings.abbreviate(task.description, 50)}"
+                                                  th:class="${task.completed} ? 'task-completed' : ''">
+                                                Description courte...
+                                            </span>
+                                            <span th:unless="${task.description != null and !#strings.isEmpty(task.description)}" class="text-muted">-</span>
+                                        </td>
+                                        <td>
+                                            <a th:href="@{/users/{id}(id=${task.user.id})}" class="text-decoration-none">
+                                                <i class="bi bi-person me-1"></i>
+                                                <span th:text="${task.user.name}">Nom de l'utilisateur</span>
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <small th:text="${#temporals.format(task.createdAt, 'dd/MM/yyyy HH:mm')}">01/01/2023 10:00</small>
+                                        </td>
+                                        <td>
+                                            <span th:if="${task.dueDate}" 
+                                                  th:text="${#temporals.format(task.dueDate, 'dd/MM/yyyy HH:mm')}" 
+                                                  class="badge bg-info">
+                                                01/01/2023 10:00
+                                            </span>
+                                            <span th:unless="${task.dueDate}" class="text-muted">-</span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a th:href="@{/tasks/{id}(id=${task.id})}" class="btn btn-outline-primary btn-sm" title="Voir">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                                <a th:href="@{/tasks/{id}/edit(id=${task.id})}" class="btn btn-outline-secondary btn-sm" title="Modifier">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                                <form th:action="@{/tasks/{id}/toggle(id=${task.id})}" method="post" class="d-inline">
+                                                    <button type="submit" class="btn btn-outline-info btn-sm" 
+                                                            th:title="${task.completed} ? 'Marquer comme en cours' : 'Marquer comme terminée'">
+                                                        <i th:class="${task.completed} ? 'bi bi-arrow-counterclockwise' : 'bi bi-check'"></i>
+                                                    </button>
+                                                </form>
+                                                <button type="button" class="btn btn-outline-danger btn-sm" 
+                                                        data-bs-toggle="modal" 
+                                                        th:data-bs-target="'#deleteModal' + ${task.id}"
+                                                        title="Supprimer">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modals de confirmation de suppression -->
+                <div th:each="task : ${tasks}" class="modal fade" th:id="'deleteModal' + ${task.id}" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Confirmer la suppression</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Êtes-vous sûr de vouloir supprimer la tâche <strong th:text="${task.title}">Titre</strong> ?</p>
+                                <p class="text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Cette action est irréversible.</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                <form th:action="@{/tasks/{id}/delete(id=${task.id})}" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-light py-4 mt-5">
+        <div class="container text-center text-muted">
+            <p class="mb-0">
+                <i class="bi bi-code-slash me-1"></i>
+                TodoList App - Application Spring Boot
+            </p>
+            <p class="mb-0">
+                <small>Auteur: Mehdi DIAS GOMES DFS-GR1</small>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
